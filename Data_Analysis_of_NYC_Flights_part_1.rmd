@@ -1,0 +1,365 @@
+---
+title: 'IMT 573: Problem Set 1 - Exploring Data'
+author: "Alana Montoya"
+date: 'Due: Tuesday, October 12, 2021 by 10am PT'
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+<!-- This syntax can be used to add comments that are ignored during knitting process. -->
+
+##### Collaborators: <!-- BE SURE TO LIST ALL COLLABORATORS HERE! -->
+
+##### Instructions:
+
+Before beginning this assignment, please ensure you have access to R and RStudio. 
+
+1. Download the `problemset1.Rmd` file from Canvas. Open `problemset1.Rmd` in RStudio and supply your solutions to the assignment by editing `problemset1.Rmd`. 
+
+2. Replace the "Insert Your Name Here" text in the `author:` field with your own full name. Any collaborators must be listed on the top of your assignment. Collaboration shouldn't be confused with group project work (where each person does a part of the project). Working on problem sets should be your individual contribution. More on that in point 8.
+
+3. Be sure to include well-documented (e.g. commented) code chucks, figures, and clearly written text chunk explanations as necessary. Any figures should be clearly labeled and appropriately referenced within the text. Be sure that each visualization adds value to your written explanation; avoid redundancy -- you do not need four different visualizations of the same pattern.
+
+4. All materials and resources that you use (with the exception of lecture slides) must be appropriately referenced within your assignment. In particular, note that Stack Overflow is licenses as Creative Commons (CC-BY-SA). This means you have to attribute any code you refer from SO.
+
+5. Partial credit will be awarded for each question for which a serious attempt at finding an answer has been shown. But please **DO NOT** submit pages and pages of hard-to-read code and attempts that is impossible to grade. That is, avoid redundancy. Remember that one of the key goals of a data scientist is to produce coherent reports that others can easily follow.  Students are \emph{strongly} encouraged to attempt each question and to document their reasoning process even if they cannot find the correct answer. If you would like to include R code to show this process, but it does not run withouth errors you can do so with the `eval=FALSE` option as follows:
+
+```{r example chunk with a bug, eval=FALSE}
+a + b # these object dont' exist 
+# if you run this on its own it with give an error
+```
+
+7. When you have completed the assignment and have **checked** that your code both runs in the Console and knits correctly when you click `Knit PDF`, rename the knitted PDF file to `ps1_ourLastName_YourFirstName.pdf`, and submit the PDF file on Canvas.
+
+8.  Collaboration is often fun and useful, but each student must turn in an individual write-up in their own words as well as code/work that is their own.  Regardless of whether you work with others, what you turn in must be your own work; this includes code and interpretation of results. The names of all collaborators must be listed on each assignment. Do not copy-and-paste from other students' responses or code.
+
+#### Problem 1: Basic R Programming
+Write a function, `calculate_bmi` to calculate a person's body mass index, when given two input parameters, 1). weight in pounds and 2) height in inches.
+
+*NOTE: You would have to go to external sources to find the formula of bmi.*
+In your response, before presenting your code for the function, tell us your official reference for the BMI formula.
+
+##### Reference for BMI formula:
+
+I obtained the BMI formula from Ramsay Health Care from [this](https://www.ramsayhealth.co.uk/weight-loss-surgery/bmi/bmi-formula) website under the "Imperial BMI formula" section. They state the formula as follows:
+
+$BMI = \frac{Weight (lbs)}{Height (inches)²} \cdot 703$.
+
+To write this function we can use order of operations. First, the height in inches is multiplied with itself once, and that number will then divide the pounds specified. Lastly, the result will then by multiplied by 703, as is expressed in the formula above.
+
+**Answer:**
+```{r}
+calculate_bmi <- function(lbs, inches) {
+  (lbs / (inches * inches)) * 703
+}
+```
+
+#### Problem 2: Exploring the NYC Flights Data
+
+In this problem set, we will use the data on all flights that departed NYC (i.e. JFK, LGA or EWR) in 2013. You can find this data in the `nycflights13` R package. 
+
+##### Setup: Problem 2
+
+You will need, at minimum, the following R packages.
+The data itself resides in package *nycflights13*. You may need to install both.
+
+```{r Setup, message=FALSE, warning=FALSE}
+# Load standard libraries
+library(tidyverse)
+library('nycflights13')
+```
+
+```{r}
+# Load the nycflights13 library which includes data on all
+# flights departing NYC
+data(flights)
+# Note the data itself is called flights, we will make it into a local df
+# for readability
+flights <- tbl_df(flights)
+# Look at the help file for information about the data
+# ?flights
+flights
+#summary(flights)
+```
+
+##### (a) Importing Data 
+
+Load the data and describe in a short paragraph how the data was collected and what each variable represents.
+
+**Answer:**
+
+The data was already loaded in above using the call `flights <- tbl_df(flights)`.
+
+The variables in the `flights` data are described as follows:
+
+* `year` represents the year the flight departed.
+* `month` represents the month the flight departed.
+* `day` represents the day the flight departed.
+* `dep_time` represents the time the flight departed.
+* `sched_dep_time` represents the time the flight was scheduled to depart.
+* `dep_delay` represents the number of minutes the flight was delayed from
+departing.
+* `arr_time` represents the time the flight arrived.
+* `sched_arr_time` represents the time the flight was scheduled to arrive.
+* `arr_delay` represents the number of minutes the flight was delayed from
+arriving.
+* `carrier` represents a two letter abbreviation of the carrier.
+* `flight` represents the flight number.
+* `tailnum` represents the tail number.
+* `origin` represents the origin of the flight.
+* `dest` represents the destination of the flight.
+* `air_time` represents the number of minutes the plane was in the air.
+* `distance` represents the number of miles between the airports.
+* `hour` represents the hour the flight was scheduled to depart.
+* `minute` represents the minute the flight was scheduled to depart.
+* `time_hour` represents the date and hour the flight was scheduled to depart.
+
+##### (b) Inspecting Data
+Perform a basic inspection of the data and discuss what you find. Inspections may involve asking the following questions (the list is not inclusive, you may well ask other questions):
+  
+  * How many distinct flights do we have in the dataset?
+
+Given that each row represents one instance of a flight, we can use the `n_distinct` function to measure how many flights there are in the dataset.
+```{r}
+num_distinct_flights <- n_distinct(flights)
+num_distinct_flights
+```
+**Answer:** There are `r num_distinct_flights` flights in the dataset.
+
+  * How many missing values are there in each variable?
+  
+Missing values are indicated by a `NA` value. To count how many missing values there are, we can create a function that counts the total number of `NA` values of a provided variable.
+```{r}
+# Create a function to count how many missing values there are in each 
+# `variable` to reduce redundancy. First, the `is.na` function is used to
+# identify all of the `NA` values and then the `sum` function is used to count
+# the total instances of `NA` values.
+num_missing <- function(variable) {
+  sum(is.na(variable))
+}
+
+# Use the `num_missing` function to count the number of missing values in each
+# variable and assign that value to another variable name to be referenced later
+num_NA_year <- num_missing(flights$year)
+num_NA_month <- num_missing(flights$month)
+num_NA_day <- num_missing(flights$day)
+num_NA_dep_time <- num_missing(flights$dep_time)
+num_NA_sched_dep_time <- num_missing(flights$sched_dep_time)
+num_NA_dep_delay <- num_missing(flights$dep_delay)
+num_NA_arr_time <- num_missing(flights$arr_time)
+num_NA_sched_arr_time <- num_missing(flights$sched_arr_time)
+num_NA_arr_delay <- num_missing(flights$arr_delay)
+num_NA_carrier <- num_missing(flights$carrier)
+num_NA_flight <- num_missing(flights$flight)
+num_NA_tailnum <- num_missing(flights$tailnum)
+num_NA_origin <- num_missing(flights$origin)
+num_NA_dest <- num_missing(flights$dest)
+num_NA_air_time <- num_missing(flights$air_time)
+num_NA_distance <- num_missing(flights$distance)
+num_NA_hour <- num_missing(flights$hour)
+num_NA_minute <- num_missing(flights$minute)
+num_NA_time_hour <- num_missing(flights$time_hour)
+```
+
+**Answer:**
+
+`year` has `r num_NA_year` missing values.
+
+`month` has `r num_NA_month` missing values.
+
+`day` has `r num_NA_day` missing values.
+
+`dep_time` has `r num_NA_dep_time` missing values.
+
+`sched_dep_time` has `r num_NA_sched_dep_time` missing values.
+
+`dep_delay` has `r num_NA_dep_delay` missing values.
+
+`arr_time` has `r num_NA_arr_time` missing values.
+
+`sched_arr_time` has `r num_NA_sched_arr_time` missing values.
+
+`arr_delay` has `r num_NA_arr_delay` missing values.
+
+`carrier` has `r num_NA_carrier` missing values.
+
+`flight` has `r num_NA_flight` missing values.
+
+`tailnum` has `r num_NA_tailnum` missing values.
+
+`origin` has `r num_NA_origin` missing values.
+
+`dest` has `r num_NA_dest` missing values.
+
+`air_time` has `r num_NA_air_time` missing values.
+
+`distance` has `r num_NA_distance` missing values.
+
+`hour` has `r num_NA_hour` missing values.
+
+`minute` has `r num_NA_minute` missing values.
+
+`time_hour`has `r num_NA_time_hour` missing values.
+  
+  * Do you see any unreasonable values? *Hint: Check out min, max and range functions.*
+  
+```{r warning = FALSE}
+# Create a function that finds the range of a non-character variable, regardless
+# of whether it contains NA values. This is important because if a variable has
+# NA values and then the range function is applied, it will simply return `NA`
+# as both the min and max of the range. Note that the range function includes
+# both the min and max of a variable, so we can just call the range function
+# instead of calling min and max seperately. Also note that since `time_hour`
+# can be measured using the range function but it is not an numeric data type,
+# we specify non-character values instead of just numeric values.
+
+range_without_NA <- function(variable) {
+  if (class(variable) != "character") {
+    range(variable, na.rm = TRUE)
+  }
+}
+
+lapply(flights, range_without_NA)
+
+```
+
+**Answer:** While the data does not seem to have concerning values (for example: there were
+not values such as having a 13th month, which doesn't exist), I did notice that
+both `dep_time` and `arr_time` have 1 as the min and 2400 as the max. 1
+represents departing/arriving at 12:01 am and 2400 represents departing/arriving
+at 12:00 am. So, technically 2400 should be the min since 12:00 am comes before
+12:01 am, but this is more of a note for interpretation going forward through
+the analysis.
+
+##### (c) Formulating Questions
+
+Consider the NYC flights data. Formulate two motivating questions you want to explore using this data. Describe why these questions are interesting and how you might go about answering them.
+
+Example questions:
+  
+  * Which airport, JFK or LGA, experience more delays?
+  * What was the worst day to fly out?
+  * Are there seasonal patterns
+  
+**Answer:**
+
+1. _How does the length of flights affect how delayed flights arrive?_
+    * This question would be useful for predicting flight times and scheduling. If there is a specific trend that appears among longer or shorter flights, it would provide insight into how long certain flights are expected to be, which could then be used to help airports coordinate how flights should be arranged in the future.
+    * Length in this question can be measured in two different ways: distance and airtime. To answer this question we will observe if or how arrival delays vary based on the distance and airtime of flights. Each will be separately measured against arrival delays using a scatter plot with a smooth line overlaid to reveal any patterns.
+
+2. _Which carriers experience the most delays?_
+    * This question is important to know for a variety of reasons. Delays in flights are often quite frustrating for customers. Customers buy tickets for specific flight times and plan according to when their flight is supposed to depart and arrive. So, delays in flights can cause significant customer dissatisfaction. Given this, from the perspective of the carrier, customers are of their highest importance which means customer satisfaction is what draws in customers and thus drives their revenue. Lastly, as airports plan flight schedules, they need to know how reliable their carriers are. If certain carriers are notoriously delayed, airports could incorporate this information into how they schedule flights, or, in really bad cases, provide guidance on which carriers to do business with.
+    * To answer this question we will observe two types of delays: departure and arrival delays. Each will be separately measured using two bar charts with the delays grouped by carrier. It would also be interesting to see how departure and arrival delays relate to each other, such as subtracting arrival delays from departure delays to see how much time a flight makes up when flying. Through this, it could then be used to predict future arrival delays based on carriers when given a departure delay.
+
+##### (d) Exploring Data
+
+For each of the questions you proposed in Problem 1c, perform an exploratory data analysis designed to address the question. Produce visualizations (graphics or tables) to answer your question.
+
+  * You need to explore the data from the point of view of the questions
+  * Depending on the question, you would need to provide precise definition. For example, what does "more delays" mean.
+  * At a minimum, you should produce two visualizations (graphics or tables) related to each question. Be sure to describe what the visuals show and how they speak to your question of interest.
+  
+**Answer:**
+  
+1. _How does the length of flights affect how delayed flights arrive?_
+
+In this question, we are looking to see if there is a relationship between the distance (in miles) or airtime (in minutes) of flights with how delayed (in minutes) they arrive, that is, as the distance and airtime of flights increase, does the arrival time increase, decrease, neither, or some combination of the two. First, we will plot `distance` against `arr_delay` since these two are our first concerns.
+
+```{r warning = FALSE}
+ggplot(data = flights, mapping = aes(x = distance, y = arr_delay)) + 
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Distance (in miles)",
+       y = "Arrival Delay (in minutes)",
+       title = "The distance a plane flys does not affect how delayed they arrive")
+```
+
+This graph does no reveal any significant correlation between the distance of flights and how delayed they arrive, that is, arrival delays appear constant across all distance traveled.
+
+Next, let's view how arrival delays vary by the time a flight spends in the air by plotting `air_time` on the x-axis and `arr_delay` on the y-axis.
+
+```{r warning = FALSE}
+ggplot(data = flights, mapping = aes(x = air_time, y = arr_delay)) + 
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Time a Flight Spends in the Air (in minutes)",
+       y = "Arrival Delay (in minutes)",
+       title = "The air time of a flight has little affect on how delayed they arrive")
+```
+
+With both of these visualization I would have expected more of a correlation, either a positive linear trend due to more time available to make up delayed departure time, or a negative linear trend due to more time to fall behind. Neither of the visualizations revealed much of a trend and thus the distance and airtime should not be used as predictors of arrival delays based on this evaluation. 
+
+2.. _Which carriers experience the most delays?_
+
+Delays in this question will refer to the average departure and arrival delays (in minutes) and will be grouped by carrier. The reason for considering averages of delays is that it provides a relative summary of how they vary throughout the year. Before creating the visualizations, it would be useful to find the average departure and arrival delays for each carrier. This can be done by first grouping by carrier and then finding the mean departure and arrival delays, excluding NA values.
+
+```{r }
+carrier_average_delay <- group_by(flights, carrier) %>%
+  summarize(average_dep_delay = mean(dep_delay, na.rm = TRUE),
+            average_arr_delay = mean(arr_delay, na.rm = TRUE))
+carrier_average_delay
+```
+
+First, we can observe the departure delays. This is done using `geom_col` since we want to represent specific values in the data, not just the count. The delays will be displayed by carrier, so the carrier will be represented on the x-axis and the average departure delays will be represent on the y-axis.
+
+```{r warning = FALSE}
+ggplot(data = carrier_average_delay) +
+  geom_col(mapping = aes(x = carrier, y = average_dep_delay)) +
+   labs(x = "Carrier",
+        y = "Average Departure Delay (in minutes)",
+        title = "Average departure delays based on carrier")
+```
+
+This visualization shows a little over a 15 minute spread in average departure delays. Alaska Airlines (AS), Hawaiian Airlines (HA), and US Airways (US) have the lowest average departure delays and ExpressJet Airlines (EV), Frontier Airlines (F9), and Mesa Airlines (YV) have the highest average departure delays. (Note that [this](https://nycflights13.tidyverse.org/reference/airlines.html) website was used to find the corresponding abbreviation of flight carriers.)
+
+To compare, we can now observe the arrival delays. Using the same strategy as above, the carrier will be represented on the x-axis and the average arrival delays will be represent on the y-axis.
+```{r warning = FALSE}
+ggplot(data = carrier_average_delay) +
+  geom_col(mapping = aes(x = carrier, y = average_arr_delay)) +
+  labs(x = "Carrier",
+        y = "Average Arrival Delay (in minutes)",
+        title = "Average arrival delays based on carrier")
+```
+
+The spread in delays expands even further than those of the previous visualization to a little over 30 minutes. Alaska Airlines (AS) and Hawaiian Airlines (HA) are the only carriers that arrive early on average. Frontier Airlines (F9) and AirTran Airways (FL) typically have the latest average arrival times.
+
+To further expand on this since there is quite the difference between departure and arrival delays, we can now look at how much time the carriers make up during their flights. We can use the previous tibble though instead summarize by the average departure delay subtracted by the average arrival delay to calculate how much time flights make up on average, again grouping by carrier.
+
+```{r}
+carrier_make_up_time <- group_by(carrier_average_delay, carrier) %>%
+  summarize(time_made_up = average_dep_delay - average_arr_delay)
+carrier_make_up_time
+```
+
+Now we can visualize this with another bar chart with the x-axis representing carriers and the y-axis expressing the time made up by each carrier.
+
+```{r warning = FALSE}
+ggplot(data = carrier_make_up_time) +
+  geom_col(mapping = aes(x = carrier, y = time_made_up)) +
+  labs(x = "Carrier",
+       y = "Average Time Made Up During Flights (in minutes)",
+       title = "Average time made up during flights based on carrier")
+```
+
+All but three of the carriers typically make up time during their flights. Not only do Frontier Airlines (F9) and AirTran Airways (FL) have among the latest average departure and arrival delays, but they also continue to lose time during their flights. Alaska Airlines (AS) and Hawaiian Airlines (HA) are among the lowest average departure delays, are the only carriers who arrive early on average, and make up the most time during flights on average.
+
+##### (e) Challenge Your Results
+
+After completing the exploratory analyses from Problem 1d, do you have any concerns about your findings? How well defined was your original question? Do you have concerns regarding your answer? Is additional analysis/different data needed? Comment on any ethical and/or privacy concerns you have with your analysis.
+
+**Answer:**
+
+1. _How does the length of flights affect how delayed flights arrive?_
+
+  * After seeing the results for the second question, it became obvious that arrival delays varied significantly by carrier. It is also possible that there are other variations of arrival delays between other variables. This suggests that facets could better illustrate possible trends and should thus be further explored. 
+
+  * While the two visualization produced did not appear to reveal much, if any, correlation between the distance or airtime and the arrival delay, this also may have been due to the choice of visualization used or not narrowing the scope of the question more. It may have been more useful to instead have used a bar chart that graphed the arrival delay with the distance and airtime grouped together in specific categories which would have reduced the clutter of the other points in the scatter plot, allowing a more "zoomed in" view. Regardless, there does not appear to be any significant linear, exponential, logarithmic or other types of trends across the data, though it is still possible of other variations between certain distances or air times.
+
+2. _Which carriers experience the most delays?_
+
+  * While the provided analysis gives good insight into how delays vary based on carrier, it is worth mentioning that measuring delays based on averages may lead to slightly skewed results. Taking the mean of all delays could be considerably affected by outlying data points, and would thus be beneficial to explore other ways of measuring delays.
+  * It would also be interesting to explore _why_ there is such variation in delays. If this could be identified, it would help carriers with high average delays find where they are experiencing issues and then direct resources to correct those problems.
+
+Additionally, both questions should specify that the data is being used solely from the year 2013 and airports in New York city, and may not accurately reflect other years or airports outside of New York city. Hence, if these question were to be used to make future decisions or decisions for places other than New York city, other years and locations should be analyzed. It is also possible that certain carriers were having a better or worse year than typical, and depending on who were to use these results, it could pose some ethical concerns. For example, if the provider of the data was aware of anomalies in this specific year or source of the data, they could have intentions to sway which data would be used in making future decisions in order to benefit themselves or their organization. Thus, it is all the more important to consider additional years and sources.
